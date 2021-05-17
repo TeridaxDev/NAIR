@@ -767,16 +767,6 @@ namespace Nair
                     break;
             }
 
-
-
-            /*windowHeight--;
-            windowWidth-=2;
-            graphics.PreferredBackBufferWidth = windowWidth;
-            graphics.PreferredBackBufferHeight = windowHeight;
-            scaleX = ((double)Game1.windowWidth / 1920);
-            scaleY = ((double)Game1.windowHeight / 1080);
-            graphics.ApplyChanges();*/
-
             base.Update(gameTime);
         }
 
