@@ -3,34 +3,53 @@ using System.Collections.Generic;
 using System.Text;
 using System.Runtime.InteropServices;
 using System.IO;
-using GGPOSharp;
+using UnityGGPO;
+//using GGPOSharp;
 using System.Diagnostics;
 
 namespace Nair.Classes.Managers
 {
 
-    class OnlineGame : IGGPOSession
+    class OnlineGame
     {
 
-        private GGPO session;
-        private GGPOSessionCallbacks callbacks;
-        private GGPO.ErrorCode errorCode;
+        private IntPtr ggpo;
+        //private GGPOSessionCallbacks callbacks;
+
+        private string errorCode;
 
         private GGPOPlayer ggpoP1, ggpoP2;
         private int handleP1, handleP2;
 
+        private static IntPtr _beginGameCallback;
+        private static IntPtr _advanceFrameCallback;
+        private static IntPtr _loadGameStateCallback;
+        private static IntPtr _logGameStateCallback;
+        private static IntPtr _saveGameStateCallback;
+        private static IntPtr _freeBufferCallback;
+        private static IntPtr _onEventCallback;
 
         public OnlineGame()
         {
-            session = new GGPO();
 
-            callbacks.BeginGame = Marshal.GetFunctionPointerForDelegate(new BeginGame(BeginGame));
-            callbacks.SaveGameState = Marshal.GetFunctionPointerForDelegate(new SaveGameState(SaveGameState));
-            callbacks.LoadGameState = Marshal.GetFunctionPointerForDelegate(new LoadGameState(LoadGameState));
-            callbacks.LogGameState = Marshal.GetFunctionPointerForDelegate(new LogGameState(LogGameState));
-            callbacks.FreeBuffer = Marshal.GetFunctionPointerForDelegate(new FreeBuffer(FreeBuffer));
-            callbacks.AdvanceFrame = Marshal.GetFunctionPointerForDelegate(new AdvanceFrame(AdvanceFrame));
-            callbacks.OnEvent = Marshal.GetFunctionPointerForDelegate(new OnEvent(OnEvent));
+            unsafe
+            {
+                _beginGameCallback = Marshal.GetFunctionPointerForDelegate<GGPO.BeginGameDelegate>(BeginGame);
+                _advanceFrameCallback = Marshal.GetFunctionPointerForDelegate<GGPO.AdvanceFrameDelegate>(AdvanceFrame);
+                _loadGameStateCallback = Marshal.GetFunctionPointerForDelegate<GGPO.LoadGameStateDelegate>(LoadGameState);
+                _logGameStateCallback = Marshal.GetFunctionPointerForDelegate<GGPO.LogGameStateDelegate>(LogGameState);
+                _saveGameStateCallback = Marshal.GetFunctionPointerForDelegate<GGPO.SaveGameStateDelegate>(SaveGameState);
+                _freeBufferCallback = Marshal.GetFunctionPointerForDelegate<GGPO.FreeBufferDelegate>(FreeBuffer);
+                _onEventCallback = Marshal.GetFunctionPointerForDelegate<GGPO.OnEventDelegate>(OnEvent);
+            }
+
+            //callbacks.BeginGame = Marshal.GetFunctionPointerForDelegate(new BeginGame(BeginGame));
+            //callbacks.SaveGameState = Marshal.GetFunctionPointerForDelegate(new SaveGameState(SaveGameState));
+            //callbacks.LoadGameState = Marshal.GetFunctionPointerForDelegate(new LoadGameState(LoadGameState));
+            //callbacks.LogGameState = Marshal.GetFunctionPointerForDelegate(new LogGameState(LogGameState));
+            //callbacks.FreeBuffer = Marshal.GetFunctionPointerForDelegate(new FreeBuffer(FreeBuffer));
+            //callbacks.AdvanceFrame = Marshal.GetFunctionPointerForDelegate(new AdvanceFrame(AdvanceFrame));
+            //callbacks.OnEvent = Marshal.GetFunctionPointerForDelegate(new OnEvent(OnEvent));
 
         }
 
@@ -94,34 +113,39 @@ namespace Nair.Classes.Managers
             }
 
 
-            unsafe
-            {
-                errorCode = session.StartSession(
-                    callbacks,
-                    "NAIR",
-                    2,
-                    sizeof(GGPOInputPackage),
-                    port);
-            }
+            errorCode = GGPO.GetErrorCodeMessage(GGPO.StartSession(out ggpo,
+                _beginGameCallback,
+                _advanceFrameCallback,
+                _loadGameStateCallback,
+                _logGameStateCallback,
+                _saveGameStateCallback,
+                _freeBufferCallback,
+                _onEventCallback,
+                "NAIR",
+                2,
+                port
+            ));
 
             // automatically disconnect clients after 3000 ms and start our count-down timer
             // for disconnects after 1000 ms.   To completely disable disconnects, simply use
             // a value of 0 for ggpo_set_disconnect_timeout.
-            session.SetDisconnectTimeout(3000);
-            session.SetDisconnectNotifyStart(1000);
+            GGPO.SetDisconnectTimeout(ggpo, 3000);
+            GGPO.SetDisconnectNotifyStart(ggpo, 1000);
+
+
 
             if (p1Local)
-                ggpoP1 = GGPO.CreateLocalPlayer(1);
+                errorCode = GGPO.GetErrorCodeMessage(GGPO.AddPlayer(ggpo, (int)GGPOPlayerType.GGPO_PLAYERTYPE_LOCAL, 1, "", 0, out handleP1));
             else
-                ggpoP1 = GGPO.CreateRemotePlayer(1, p1ip, opponentport);
+                errorCode = GGPO.GetErrorCodeMessage(GGPO.AddPlayer(ggpo, (int)GGPOPlayerType.GGPO_PLAYERTYPE_REMOTE, 1, p1ip, (ushort)opponentport, out handleP1));
 
             if (p2Local)
-                ggpoP2 = GGPO.CreateLocalPlayer(2);
+                errorCode = GGPO.GetErrorCodeMessage(GGPO.AddPlayer(ggpo, (int)GGPOPlayerType.GGPO_PLAYERTYPE_LOCAL, 2, "", 0, out handleP2));
             else
-                ggpoP2 = GGPO.CreateRemotePlayer(2, p2ip, opponentport);
+                errorCode = GGPO.GetErrorCodeMessage(GGPO.AddPlayer(ggpo, (int)GGPOPlayerType.GGPO_PLAYERTYPE_REMOTE, 2, p2ip, (ushort)opponentport, out handleP2));
 
-            errorCode = session.AddPlayer(ref ggpoP1, out handleP1);
-            errorCode = session.AddPlayer(ref ggpoP2, out handleP2);
+
+
 
 
 
@@ -129,7 +153,7 @@ namespace Nair.Classes.Managers
 
         public void Close()
         {
-            errorCode = session.CloseSession();
+            errorCode = GGPO.GetErrorCodeMessage(GGPO.CloseSession(ggpo));
         }
 
         public void Draw()
@@ -137,47 +161,48 @@ namespace Nair.Classes.Managers
 
         }
 
-        public bool BeginGame(string game)
+        
+        public bool AdvanceFrame(int flags)
         {
-            Debug.WriteLine("BeginGame");
-            PlayerManagerRollback.Instance.ResetGame(true);
+
             return true;
         }
 
-        public bool SaveGameState(ref byte[] buffer, ref int len, ref int checksum, int frame)
+        public bool BeginGame(string text)
         {
-            Debug.WriteLine("Save");
+
             return true;
         }
 
-        public bool LoadGameState(byte[] buffer, int len)
+        public unsafe bool LoadGameState(void* data, int length)
         {
-            Debug.WriteLine("Load");
+
             return true;
         }
 
-        public bool LogGameState(string filename, byte[] buffer, int len)
+        public unsafe bool LogGameState(string filename, void* buffer, int length)
         {
-            Debug.WriteLine("Log");
+
             return true;
         }
 
-        public void FreeBuffer(IntPtr buffer)
+        public unsafe bool SaveGameState(void** buffer, int* len, int* checksum, int frame)
         {
-            Debug.WriteLine("Free");
+
+            return true;
+        }
+
+        public unsafe void FreeBuffer(void* buffer)
+        {
+
             return;
         }
 
-        public bool AdvanceFrame(int flags)
+        public unsafe bool OnEvent(IntPtr evt)
         {
-            Debug.WriteLine("Advance");
+
             return true;
         }
 
-        public bool OnEvent(ref GGPOEvent info)
-        {
-            Debug.WriteLine("OnEvent");
-            return true;
-        }
     }
 }
