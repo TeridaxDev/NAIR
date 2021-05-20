@@ -25,6 +25,17 @@ enum Actions
 
 namespace Nair.Classes.Managers
 {
+
+    public struct GGPOInputPackage
+    {
+        public float stickX;
+        public float stickY;
+        public bool attack;
+        public bool dodge;
+        public bool jump;
+        public bool start;
+    }
+
     class ControllerManager
     {
 

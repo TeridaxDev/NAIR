@@ -13,7 +13,8 @@ public enum GameState
     game,
     tutorial,
     intro,
-    controller
+    controller,
+    onlineGame
 }
 
 namespace Nair
@@ -96,6 +97,8 @@ namespace Nair
         private ControllerCustomizer controllerCustomizer;
         private KeyboardCustomizer keyboardCustomizer;
 
+        private OnlineGame rollbackManager;
+
         public static Texture2D BlankPixel { get => blankPixel; }
         public static Texture2D TransBlankPixel { get => transBlankPixel; }
         public static Color BGColor { get => bgColor; }
@@ -144,15 +147,18 @@ namespace Nair
 
             AnimationManager.Initialize(graphics, Content);
             PlayerManager.Initialize(graphics, Content);
+            PlayerManagerRollback.Initialize(graphics, Content);
             ControllerManager.Initialize(profile1, profile2, profile3);
 
             ControllerManager.Instance.SetPlayerIndexes(PlayerIndex.One, PlayerIndex.Two);
             ControllerManager.Update();
 
             state = GameState.intro;
-            mainMenu = new Menu(new Rectangle(700, 600, 500, 480));
+            mainMenu = new Menu(new Rectangle(700, 530, 500, 550));
             options = new Menu(new Rectangle(500, 15, 920, 1070));
             controls = new Menu(new Rectangle(500, 120, 920, 900));
+
+            rollbackManager = new OnlineGame();
 
             base.Initialize();
         }
@@ -233,6 +239,7 @@ namespace Nair
             keyBut.AddOption(Content.Load<Texture2D>("UI/Player1"));
             keyBut.AddOption(Content.Load<Texture2D>("UI/Player2"));
 
+            mainMenu.AddButton(new Button(new Rectangle(845, 580, 230, 80), buttonPlay1, buttonPlay2));
             mainMenu.AddButton(new Button(new Rectangle(845, 675, 230, 80), buttonPlay1, buttonPlay2));
             mainMenu.AddButton(new Button(new Rectangle(845, 770, 230, 80), buttonTutorial1, buttonTutorial2));
             mainMenu.AddButton(new Button(new Rectangle(845, 865, 230, 80), buttonOptions1, buttonOptions2));
@@ -527,14 +534,20 @@ namespace Nair
                                     break;
                                 case 1:
                                     mainMenu.Hide();
+                                    state = GameState.onlineGame;
+                                    rollbackManager.Initialize();
+                                    frame = 0;
+                                    break;
+                                case 2:
+                                    mainMenu.Hide();
                                     state = GameState.tutorial;
                                     tutorial.Reset();
                                     frame = 0;
                                     break;
-                                case 2:
+                                case 3:
                                     options.Show();
                                     break;
-                                case 3:
+                                case 4:
                                     this.Exit();
                                     break;
                             }
