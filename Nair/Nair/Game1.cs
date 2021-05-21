@@ -441,7 +441,7 @@ namespace Nair
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
-
+            
             switch (state)
             {
                 case GameState.intro:
@@ -465,7 +465,7 @@ namespace Nair
                     AnimationManager.Update();
                     break;
                 case GameState.onlineGame:
-                    rollbackManager.Update();
+                    rollbackManager.Update(gameTime);
                     break;
                 case GameState.tutorial:
                     tutorial.Update();

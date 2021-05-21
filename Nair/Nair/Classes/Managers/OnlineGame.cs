@@ -4,6 +4,7 @@ using System.Text;
 using System.Runtime.InteropServices;
 using System.IO;
 using UnityGGPO;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Diagnostics;
 
@@ -161,14 +162,17 @@ namespace Nair.Classes.Managers
         }
 
 
-        public void Update()
+        public void Update(GameTime gameTime)
         {
+
+            GGPO.Idle(ggpo, 6);
+
             //Update local player inputs
             ControllerManager.Update(true);
 
             if (ggpoP1.type == GGPOPlayerType.GGPO_PLAYERTYPE_LOCAL)
                 errorCode = GGPO.AddLocalInput(ggpo, handleP1, ControllerManager.RequestGGPOLocalInput(false));
-            else if(ggpoP1.type == GGPOPlayerType.GGPO_PLAYERTYPE_LOCAL)
+            else if(ggpoP2.type == GGPOPlayerType.GGPO_PLAYERTYPE_LOCAL)
                 errorCode = GGPO.AddLocalInput(ggpo, handleP2, ControllerManager.RequestGGPOLocalInput(false));
 
             //Synchronize inputs with GGPO
@@ -181,6 +185,8 @@ namespace Nair.Classes.Managers
                 {
                     //Update frame
                     PlayerManagerRollback.Instance.Update();
+                    //Call AdvanceFrame to notify GGPO, it doesn't actually Update()
+                    GGPO.AdvanceFrame(ggpo);
                 }
             }
             else
@@ -188,11 +194,8 @@ namespace Nair.Classes.Managers
 
             }
 
-            //Call AdvanceFrame to notify GGPO, it doesn't actually Update()
-
 
             //Call Idle with some time, to allow ggpo to do its thing
-
 
             AnimationManager.Update();
         }
@@ -247,7 +250,52 @@ namespace Nair.Classes.Managers
         public unsafe bool OnEvent(IntPtr evt)
         {
             Debug.WriteLine("On Event");
-            return true;
+
+            int[] data = new int[4];
+            Marshal.Copy(evt, data, 0, 4);
+            switch (data[0])
+            {
+                case GGPO.EVENTCODE_CONNECTED_TO_PEER:
+                    Debug.WriteLine("CONNECTED_TO_PEER");
+                    return true;
+                    //return onEventConnectedToPeer(data[1]);
+
+                case GGPO.EVENTCODE_SYNCHRONIZING_WITH_PEER:
+                    Debug.WriteLine("SYNCHRONIZING_WITH_PEER");
+                    return true;
+                    //return onEventSynchronizingWithPeer(data[1], data[2], data[3]);
+
+                case GGPO.EVENTCODE_SYNCHRONIZED_WITH_PEER:
+                    Debug.WriteLine("SYNCHRONIZED_WITH_PEER");
+                    return true;
+                    //return onEventSynchronizedWithPeer(data[1]);
+
+                case GGPO.EVENTCODE_RUNNING:
+                    Debug.WriteLine("RUNNING");
+                    return true;
+                    //return onEventRunning();
+
+                case GGPO.EVENTCODE_DISCONNECTED_FROM_PEER:
+                    Debug.WriteLine("DISCONNECTED_FROM_PEER");
+                    return true;
+                    //return onEventDisconnectedFromPeer(data[1]);
+
+                case GGPO.EVENTCODE_TIMESYNC:
+                    Debug.WriteLine("TIMESYNC");
+                    return true;
+                    //return onEventTimesync(data[1]);
+
+                case GGPO.EVENTCODE_CONNECTION_INTERRUPTED:
+                    Debug.WriteLine("CONNECTION_INTERRUPTED");
+                    return true;
+                    //return onEventConnectionInterrupted(data[1], data[2]);
+
+                case GGPO.EVENTCODE_CONNECTION_RESUMED:
+                    Debug.WriteLine("CONNECTION_RESUMED");
+                    return true;
+                    //return onEventConnectionResumed(data[1]);
+            }
+            return false;
         }
 
     }
