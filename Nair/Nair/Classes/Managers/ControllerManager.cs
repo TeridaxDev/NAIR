@@ -26,14 +26,24 @@ enum Actions
 namespace Nair.Classes.Managers
 {
 
-    public struct GGPOInputPackage
+    public struct GGPOInputPackage //size of needs to fit in a uint
     {
-        public float stickX;
-        public float stickY;
-        public bool attack;
-        public bool dodge;
-        public bool jump;
-        public bool start;
+        //32 bits
+
+
+        public bool softLeft;
+        public bool hardLeft;
+        public bool softRight;
+        public bool hardRight;
+        public bool softUp;
+        public bool hardUp;
+        public bool softDown;
+        public bool hardDown;
+
+        public bool attack;   //1 bit
+        public bool dodge;    //1 bit
+        public bool jump;     //1 bit
+        public bool start;    //1 bit
     }
 
     class ControllerManager
@@ -47,6 +57,10 @@ namespace Nair.Classes.Managers
 
         private static PlayerIndex p1Controller;
         private static PlayerIndex p2Controller;
+
+        private bool ggpo = false;
+        private GGPOInputPackage currentLocalInput;
+        private GGPOInputPackage oldLocalInput;
 
         private List<ControlProfile> profiles;
 
@@ -98,6 +112,58 @@ namespace Nair.Classes.Managers
         /// <returns></returns>
         public static bool GetAction(int playerNumber, Actions action, bool old)
         {
+
+            if (playerNumber == 4)
+            {
+                GGPOInputPackage refr;
+
+                if (!old)
+                    refr = instance.currentLocalInput;
+                else
+                    refr = instance.oldLocalInput;
+
+                switch(action)
+                {
+                    case Actions.horizontalNeutral:
+                        return !(refr.hardDown || refr.softDown ||
+                            refr.hardUp || refr.softUp ||
+                            refr.hardLeft || refr.softLeft ||
+                            refr.hardRight || refr.softRight);
+                    case Actions.hardRight:
+                        return refr.hardRight;
+                    case Actions.softRight:
+                        return refr.softRight;
+                    case Actions.hardLeft:
+                        return refr.hardLeft;
+                    case Actions.softLeft:
+                        return refr.softLeft;
+                    case Actions.hardUp:
+                        return refr.hardUp;
+                    case Actions.softUp:
+                        return refr.softUp;
+                    case Actions.hardDown:
+                        return refr.hardDown;
+                    case Actions.softDown:
+                        return refr.softDown;
+                    case Actions.start:
+                        return refr.start;
+                    case Actions.attack:
+                        return refr.attack;
+                    case Actions.jump:
+                        return refr.jump;
+                    case Actions.dodge:
+                        return refr.dodge;
+                    default:
+                        return GetAction(1, action, old) || GetAction(2, action, old) || GetAction(3, action, old);
+                }
+
+            }
+            else if (playerNumber == 5)
+            {
+                return true;
+                throw new NotImplementedException();
+            }
+
             if (instance.profiles[playerNumber - 1].UsingController)
             {
                 //Fetch the gamepad
@@ -265,7 +331,27 @@ namespace Nair.Classes.Managers
         /// <returns></returns>
         public static float GetDrift(int index)
         {
-            if(index != 3)
+
+            if(index == 4)
+            {
+                if (instance.currentLocalInput.hardLeft)
+                    return -1;
+                else if (instance.currentLocalInput.softLeft)
+                    return -0.5f;
+                else if (instance.currentLocalInput.hardRight)
+                    return 1;
+                else if (instance.currentLocalInput.softRight)
+                    return 0.5f;
+                else
+                    return 0;
+
+            }
+            else if(index == 5)
+            {
+                return 1;
+            }
+
+            else if(index != 3)
                 return instance.gamePads[index - 1].ThumbSticks.Left.X;
             else
             {
@@ -283,6 +369,24 @@ namespace Nair.Classes.Managers
         }
         public static float GetHeight(int index)
         {
+            if(index == 4)
+            {
+                if (instance.currentLocalInput.hardUp)
+                    return 1;
+                else if (instance.currentLocalInput.softUp)
+                    return 0.5f;
+                else if (instance.currentLocalInput.hardDown)
+                    return -1;
+                else if (instance.currentLocalInput.softDown)
+                    return -0.5f;
+                else
+                    return 0;
+            }
+            else if(index == 5)
+            {
+                return 1;
+            }
+
             if(index != 3)
                 return instance.gamePads[index - 1].ThumbSticks.Left.Y;
             else
@@ -303,7 +407,7 @@ namespace Nair.Classes.Managers
         /// <summary>
         /// Check the controllers of both players
         /// </summary>
-        public static void Update()
+        public static void Update(bool ggpo = false)
         {
             //Move the old gamepadstates into the old list
             instance.oldGamePads.Clear();
@@ -316,8 +420,158 @@ namespace Nair.Classes.Managers
             instance.gamePads.Add(GamePad.GetState(p2Controller));
             instance.keyBoardState = Keyboard.GetState();
 
+            if(ggpo)
+            {
+                RequestGGPOLocalInput(true);
+            }
+
         }
 
+        public static uint RequestGGPOLocalInput(bool old)
+        {
+            instance.ggpo = true;
+
+            GGPOInputPackage pack = new GGPOInputPackage();
+
+            pack.attack = GetAction(1, Actions.attack, old) || GetAction(2, Actions.attack, old) || GetAction(3, Actions.attack, old);
+            pack.dodge = GetAction(1, Actions.dodge, old) || GetAction(2, Actions.dodge, old) || GetAction(3, Actions.dodge, old);
+            pack.jump = GetAction(1, Actions.jump, old) || GetAction(2, Actions.jump, old) || GetAction(3, Actions.jump, old);
+            pack.start = GetAction(1, Actions.start, old) || GetAction(2, Actions.start, old) || GetAction(3, Actions.start, old);
+
+            if (ControllerManager.GetAction(3, Actions.hardRight, old))
+                pack.hardRight = true;
+            if (ControllerManager.GetAction(3, Actions.hardLeft, old))
+                pack.hardLeft = true;
+            if (ControllerManager.GetAction(3, Actions.softLeft, old))
+                pack.softLeft = true;
+            if (ControllerManager.GetAction(3, Actions.softRight, old))
+                pack.softRight = true;
+            if (ControllerManager.GetAction(3, Actions.hardUp, old))
+                pack.hardUp = true;
+            if (ControllerManager.GetAction(3, Actions.hardDown, old))
+                pack.hardDown = true;
+            if (ControllerManager.GetAction(3, Actions.softDown, old))
+                pack.softDown = true;
+            if (ControllerManager.GetAction(3, Actions.softUp, old))
+                pack.softUp = true;
+
+            if (!old)
+            {
+                if (instance.gamePads[0].ThumbSticks.Left.X > 0.5 || instance.gamePads[1].ThumbSticks.Left.X > 0.5)
+                    pack.hardLeft = true;
+                else if (instance.gamePads[0].ThumbSticks.Left.X > 0.2 || instance.gamePads[1].ThumbSticks.Left.X > 0.2)
+                    pack.softLeft = true;
+                else if (instance.gamePads[0].ThumbSticks.Left.X < -0.5 || instance.gamePads[1].ThumbSticks.Left.X < -0.5)
+                    pack.hardRight = true;
+                else if (instance.gamePads[0].ThumbSticks.Left.X < -0.2 || instance.gamePads[1].ThumbSticks.Left.X < -0.2)
+                    pack.softRight = true;
+
+                if (instance.gamePads[0].ThumbSticks.Left.Y > 0.5 || instance.gamePads[1].ThumbSticks.Left.Y > 0.5)
+                    pack.hardUp = true;
+                else if (instance.gamePads[0].ThumbSticks.Left.Y > 0.2 || instance.gamePads[1].ThumbSticks.Left.Y > 0.2)
+                    pack.softUp = true;
+                else if (instance.gamePads[0].ThumbSticks.Left.Y < -0.5 || instance.gamePads[1].ThumbSticks.Left.Y < -0.5)
+                    pack.hardDown = true;
+                else if (instance.gamePads[0].ThumbSticks.Left.Y < -0.2 || instance.gamePads[1].ThumbSticks.Left.Y < -0.2)
+                    pack.softDown = true;
+
+            }
+            else
+            {
+                if (instance.oldGamePads[0].ThumbSticks.Left.X > 0.5 || instance.oldGamePads[1].ThumbSticks.Left.X > 0.5)
+                    pack.hardLeft = true;
+                else if (instance.oldGamePads[0].ThumbSticks.Left.X > 0.2 || instance.oldGamePads[1].ThumbSticks.Left.X > 0.2)
+                    pack.softLeft = true;
+                else if (instance.oldGamePads[0].ThumbSticks.Left.X < -0.5 || instance.oldGamePads[1].ThumbSticks.Left.X < -0.5)
+                    pack.hardRight = true;
+                else if (instance.oldGamePads[0].ThumbSticks.Left.X < -0.2 || instance.oldGamePads[1].ThumbSticks.Left.X < -0.2)
+                    pack.softRight = true;
+
+                if (instance.oldGamePads[0].ThumbSticks.Left.Y > 0.5 || instance.oldGamePads[1].ThumbSticks.Left.Y > 0.5)
+                    pack.hardUp = true;
+                else if (instance.oldGamePads[0].ThumbSticks.Left.Y > 0.2 || instance.oldGamePads[1].ThumbSticks.Left.Y > 0.2)
+                    pack.softUp = true;
+                else if (instance.oldGamePads[0].ThumbSticks.Left.Y < -0.5 || instance.oldGamePads[1].ThumbSticks.Left.Y < -0.5)
+                    pack.hardDown = true;
+                else if (instance.oldGamePads[0].ThumbSticks.Left.Y < -0.2 || instance.oldGamePads[1].ThumbSticks.Left.Y < -0.2)
+                    pack.softDown = true;
+            }
+
+            if (old)
+                Instance.oldLocalInput = pack;
+            else
+                Instance.currentLocalInput = pack;
+
+
+            return instance.PackInput(pack);
+
+        }
+
+        private uint PackInput(GGPOInputPackage package)
+        {
+            uint value = 0;
+
+            if(package.start)
+                value = value & 1;
+            value = value << 1;
+
+            if (package.attack)
+                value = value & 1;
+            value = value << 1;
+
+            if (package.jump)
+                value = value & 1;
+            value = value << 1;
+
+            if (package.dodge)
+                value = value & 1;
+            value = value << 1;
+
+            if (package.hardLeft)
+                value = value & 1;
+            value = value << 1;
+
+            if (package.softLeft)
+                value = value & 1;
+            value = value << 1;
+
+            if (package.hardRight)
+                value = value & 1;
+            value = value << 1;
+
+            if (package.softRight)
+                value = value & 1;
+            value = value << 1;
+
+            if (package.hardUp)
+                value = value & 1;
+            value = value << 1;
+
+            if (package.softUp)
+                value = value & 1;
+            value = value << 1;
+
+            if (package.hardDown)
+                value = value & 1;
+            value = value << 1;
+
+            if (package.softDown)
+                value = value & 1;
+
+            return value;
+
+        }
+
+
+        public static void FeedLocalInput()
+        {
+
+        }
+
+        public static void ClearGGPO()
+        {
+            instance.ggpo = false;
+        }
 
     }
 }

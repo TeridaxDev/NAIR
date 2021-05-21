@@ -48,7 +48,7 @@ namespace Nair.Classes
         private SoundEffectInstance skidEffect;
 
         private int playerIndex;
-        private int controllerProfile;
+        public int controllerProfile;
         private int lag;
         private bool fastfall = false;
         private bool fall = false;
@@ -705,14 +705,14 @@ namespace Nair.Classes
             hurtboxPosition = new Rectangle((int)Math.Ceiling(Game1.ScaleX * hurtbox.X), (int)Math.Ceiling(Game1.ScaleY * hurtbox.Y), (int)Math.Ceiling(Game1.ScaleX * hurtbox.Width), (int)Math.Ceiling(Game1.ScaleY * hurtbox.Height));
 
             //Draw sprite
-            AnimationManager.DrawPlayer(spriteBatch, this.playerIndex, this.direction, this.state, hurtboxPosition, this.lag);
+            AnimationManager.DrawPlayer(spriteBatch, this.playerIndex, this.direction, this.state, hurtboxPosition, this.lag, controllerProfile);
 
             
         }
 
         public void DrawAccessory(SpriteBatch spriteBatch)
         {
-            AnimationManager.DrawWeapons(spriteBatch, this.playerIndex, this.direction, this.state, hurtboxPosition, this.lag, this.attackStartup, this.attackActive, this.attackLag);
+            AnimationManager.DrawWeapons(spriteBatch, this.playerIndex, this.direction, this.state, hurtboxPosition, this.lag, this.attackStartup, this.attackActive, this.attackLag, controllerProfile);
 
             foreach (DustCloud puff in dust) AnimationManager.DrawDust(puff, spriteBatch);
         }

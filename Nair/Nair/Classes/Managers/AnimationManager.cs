@@ -114,7 +114,7 @@ namespace Nair.Classes.Managers
 
 
         //Draw the player
-        public static void DrawPlayer(SpriteBatch spritebatch, int playerNumber, Direction direction, PlayerState state, Rectangle hurtbox, int actionFrame)
+        public static void DrawPlayer(SpriteBatch spritebatch, int playerNumber, Direction direction, PlayerState state, Rectangle hurtbox, int actionFrame, int controllerID)
         {
             //Establish left or right
             SpriteEffects flip = SpriteEffects.None;
@@ -139,6 +139,7 @@ namespace Nair.Classes.Managers
                 else
                     color = Color.Maroon;
             }
+            if (controllerID == 5) color = Color.Yellow;
             //Dodge invincibility 
             if (state == PlayerState.dodge || state == PlayerState.dead) color = Color.DarkGray;
 
@@ -155,7 +156,7 @@ namespace Nair.Classes.Managers
 
         }
 
-        public static void DrawWeapons(SpriteBatch spritebatch, int playerNumber, Direction direction, PlayerState state, Rectangle hurtbox, int actionFrame, int attackStartup, int attackActive, int attackLag)
+        public static void DrawWeapons(SpriteBatch spritebatch, int playerNumber, Direction direction, PlayerState state, Rectangle hurtbox, int actionFrame, int attackStartup, int attackActive, int attackLag, int controllerID)
         {
             //Establish left or right
             SpriteEffects flip = SpriteEffects.None;
@@ -174,6 +175,7 @@ namespace Nair.Classes.Managers
                     color = Color.Green;
             }
             else if (Game1.UsingKeyboard == 2 && playerNumber == 2) color = Color.Yellow;
+            if (controllerID == 5) color = Color.DarkGray;
 
             //Draw Sword
             if (state != PlayerState.attack && state != PlayerState.dead)
@@ -249,6 +251,7 @@ namespace Nair.Classes.Managers
                 else
                     color = Color.Maroon;
             }
+            if (player1.controllerProfile == 5) color = Color.Yellow;
             float p1HealthBarPercent = player1.Health * 9;
             spriteBatch.Draw(instance.healthBarFill[anim], new Rectangle((int)Math.Ceiling(Game1.ScaleX * 60), (int)Math.Ceiling(Game1.ScaleY * 30), (int)Math.Ceiling(Game1.ScaleX * p1HealthBarPercent), (int)Math.Ceiling(Game1.ScaleY * 100)),
                 new Rectangle(0, 0, (int)p1HealthBarPercent, 100), color);
@@ -262,6 +265,7 @@ namespace Nair.Classes.Managers
                 else
                     color = Color.Maroon;
             }
+            if (player2.controllerProfile == 5) color = Color.Yellow;
             float p2HealthBarPercent = player2.Health * 9;
             spriteBatch.Draw(instance.healthBarFill[anim], new Rectangle((int)Math.Ceiling(Game1.ScaleX * (1860 - p2HealthBarPercent)), (int)Math.Ceiling(Game1.ScaleY * 30), (int)Math.Ceiling(Game1.ScaleX * p2HealthBarPercent), (int)Math.Ceiling(Game1.ScaleY * 100)),
                 new Rectangle(0, 0, (int)p2HealthBarPercent, 100), color, 0f, new Vector2(), SpriteEffects.FlipHorizontally, 1f);
@@ -284,6 +288,7 @@ namespace Nair.Classes.Managers
                 else
                     color = Color.Maroon;
             }
+            if (player1.controllerProfile == 5) color = Color.Yellow;
             if (player1Score > 0)
                 spriteBatch.Draw(instance.penantFill, new Rectangle((int)Math.Ceiling(Game1.ScaleX * 65), (int)Math.Ceiling(Game1.ScaleY * 140), (int)Math.Ceiling(Game1.ScaleX * 45), (int)Math.Ceiling(Game1.ScaleY * 60)), color);
             if (player1Score > 1)
@@ -300,6 +305,7 @@ namespace Nair.Classes.Managers
                 else
                     color = Color.Maroon;
             }
+            if (player2.controllerProfile == 5) color = Color.Yellow;
             if (player2Score > 0)
                 spriteBatch.Draw(instance.penantFill, new Rectangle((int)Math.Ceiling(Game1.ScaleX * 1810), (int)Math.Ceiling(Game1.ScaleY * 140), (int)Math.Ceiling(Game1.ScaleX * 45), (int)Math.Ceiling(Game1.ScaleY * 60)), color);
             if (player2Score > 1)

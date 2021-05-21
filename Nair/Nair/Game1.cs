@@ -97,7 +97,7 @@ namespace Nair
         private ControllerCustomizer controllerCustomizer;
         private KeyboardCustomizer keyboardCustomizer;
 
-        private OnlineGame rollbackManager;
+        public static OnlineGame rollbackManager;
 
         public static Texture2D BlankPixel { get => blankPixel; }
         public static Texture2D TransBlankPixel { get => transBlankPixel; }
@@ -111,6 +111,7 @@ namespace Nair
         public static GameState GameState { get => state; set => state = value; }
         public static bool ShowHitboxes { get => showHitboxes; }
         public static int UsingKeyboard { get => usingKeyboard; }
+
 
         public Game1()
         {
@@ -459,9 +460,12 @@ namespace Nair
                     }
                         break;
                 case GameState.game:
-                    PlayerManager.Instance.Update();
                     ControllerManager.Update();
+                    PlayerManager.Instance.Update();
                     AnimationManager.Update();
+                    break;
+                case GameState.onlineGame:
+                    rollbackManager.Update();
                     break;
                 case GameState.tutorial:
                     tutorial.Update();
@@ -807,6 +811,11 @@ namespace Nair
                     spriteBatch.Draw(blankPixel, new Rectangle(0, (int)Math.Ceiling(900 * ((double)windowHeight / 1080)), windowWidth, (int)Math.Ceiling((((double)windowHeight / 1080) * 5))), Color.Black);
                     //Draw the Game
                     PlayerManager.Instance.Draw(spriteBatch);
+                    break;
+                case GameState.onlineGame:
+                    spriteBatch.Draw(blankPixel, new Rectangle(0, (int)Math.Ceiling(900 * ((double)windowHeight / 1080)), windowWidth, (int)Math.Ceiling((((double)windowHeight / 1080) * 5))), Color.Black);
+                    
+                    rollbackManager.Draw(spriteBatch);
                     break;
                 case GameState.tutorial:
                     //Draw the Floor

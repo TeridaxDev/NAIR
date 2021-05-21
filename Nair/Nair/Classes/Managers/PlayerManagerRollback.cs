@@ -120,7 +120,7 @@ namespace Nair.Classes.Managers
             pauseMenu.AddButton(new Button(new Rectangle(845, 585, 230, 80), buttonRestart1, buttonRestart2));
             pauseMenu.AddButton(new Button(new Rectangle(845, 715, 230, 80), buttonMenu1, buttonMenu2));
 
-            this.ResetGame(true);
+            this.ResetGame(true, 4, 5);
 
         }
 
@@ -207,7 +207,7 @@ namespace Nair.Classes.Managers
 
                     if (frame == 240 && player1Score < 2 && player2Score < 2)
                     {
-                        this.ResetGame(false);
+                        this.ResetGame(false, player1.controllerProfile, player2.controllerProfile);
                     }
                     else if ((player1Score == 2 || player2Score == 2) && (ControllerManager.GetAction(1, Actions.start, false) || ControllerManager.GetAction(2, Actions.start, false) || ControllerManager.GetAction(3, Actions.start, false)))
                     {
@@ -244,9 +244,10 @@ namespace Nair.Classes.Managers
                     case -1:
                         break;
                     case 0:
-                        this.ResetGame(true);
+                        this.ResetGame(true, player1.controllerProfile, player2.controllerProfile);
                         break;
                     case 1:
+                        Game1.rollbackManager.Close();
                         Game1.GameState = GameState.mainMenu;
                         break;
                 }
@@ -270,9 +271,10 @@ namespace Nair.Classes.Managers
                         pauseMenu.Hide();
                         break;
                     case 1:
-                        this.ResetGame(true);
+                        this.ResetGame(true, player1.controllerProfile, player2.controllerProfile);
                         break;
                     case 2:
+                        Game1.rollbackManager.Close();
                         Game1.GameState = GameState.mainMenu;
                         break;
                 }
@@ -355,27 +357,21 @@ namespace Nair.Classes.Managers
         /// Reset the timer and both players
         /// </summary>
         /// <param name="resetRound">Whether or not to set the scores to 0</param>
-        public void ResetGame(bool resetRound)
+        public void ResetGame(bool resetRound, int player1ID, int player2ID)
         {
-            int playernumber = 1;
-            if (Game1.UsingKeyboard == 1) playernumber = 3;
-
             player1 = new Player(
                 new Vector2(100, floorLocation - 250),                                                                                              //Player Position
                 new Rectangle(100, floorLocation - 250, 150, 250),                                                                                  //Player hurtbox
                 Direction.right,                                                                                                                    //Direction being faced
                 1,                                                                                                                                  //left or right of the screen
-                playernumber);                                                                                                                                 //Controller profile
+                player1ID);                                                                                                                                 //Controller profile
 
-            playernumber = 2;
-            if (Game1.UsingKeyboard == 2) playernumber = 3;
-            else if (Game1.UsingKeyboard == 1) playernumber = 1;
             player2 = new Player(
                 new Vector2(1920 - player1.Hurtbox.X - player1.Hurtbox.Width, player1.Hurtbox.Y),                                                   //Player Position
                 new Rectangle(1920 - player1.Hurtbox.X - player1.Hurtbox.Width, player1.Hurtbox.Y, player1.Hurtbox.Width, player1.Hurtbox.Height),  //Player hurtbox
                 Direction.left,                                                                                                                     //Direction being faced
                 2,                                                                                                                                  //left or right of the screen
-                playernumber);                                                                                                                                 //Controller Profile
+                player2ID);                                                                                                                                 //Controller Profile
 
             time = 80;
             gameOver = false;
