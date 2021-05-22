@@ -9,3 +9,5 @@ Local port
 p1 local/ip:opponent port
 p2 local/ip:opponent port
 input delay in frames
+
+127.0.0.1:7001

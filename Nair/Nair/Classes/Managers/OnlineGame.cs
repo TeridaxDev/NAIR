@@ -7,6 +7,7 @@ using UnityGGPO;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Diagnostics;
+using System.Threading;
 
 namespace Nair.Classes.Managers
 {
@@ -50,8 +51,8 @@ namespace Nair.Classes.Managers
 
             short port = 0;
             short opponentport = 0;
-            string p2ip = "0.0.0.0";
-            string p1ip = "0.0.0.0";
+            string p2ip = "";
+            string p1ip = "";
             bool p1Local = false;
             bool p2Local = false;
 
@@ -145,13 +146,14 @@ namespace Nair.Classes.Managers
             // automatically disconnect clients after 3000 ms and start our count-down timer
             // for disconnects after 1000 ms.   To completely disable disconnects, simply use
             // a value of 0 for ggpo_set_disconnect_timeout.
-            GGPO.SetDisconnectTimeout(ggpo, 3000);
-            GGPO.SetDisconnectNotifyStart(ggpo, 1000);
+            GGPO.SetDisconnectTimeout(ggpo, 0);
+            GGPO.SetDisconnectNotifyStart(ggpo, 0);
 
             errorCode = GGPO.AddPlayer(ggpo, (int)ggpoP1.type, ggpoP1.player_num, ggpoP1.ip_address, ggpoP1.port, out handleP1);
             errorCode = GGPO.AddPlayer(ggpo, (int)ggpoP2.type, ggpoP2.player_num, ggpoP2.ip_address, ggpoP2.port, out handleP2);
 
-
+            GGPO.SetFrameDelay(ggpo, handleP1, 2);
+            GGPO.SetFrameDelay(ggpo, handleP2, 2);
 
         }
 
@@ -164,8 +166,9 @@ namespace Nair.Classes.Managers
 
         public void Update(GameTime gameTime)
         {
-
+            //Call Idle with some time, to allow ggpo to do its thing
             GGPO.Idle(ggpo, 6);
+            Thread.Sleep(6);
 
             //Update local player inputs
             ControllerManager.Update(true);
@@ -191,11 +194,14 @@ namespace Nair.Classes.Managers
             }
             else
             {
-
+                int queuelen;
+                int recqueue;
+                int ping;
+                int kbpssent;
+                int localbehind;
+                int remotebehind;
+                GGPO.GetNetworkStats(ggpo, 2, out queuelen, out recqueue, out ping, out kbpssent, out localbehind, out remotebehind);
             }
-
-
-            //Call Idle with some time, to allow ggpo to do its thing
 
             AnimationManager.Update();
         }
