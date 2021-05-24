@@ -22,6 +22,7 @@ namespace Nair.Classes.Managers
 
         private GGPOPlayer ggpoP1, ggpoP2;
         private int handleP1, handleP2;
+        int port;
 
         private static IntPtr _beginGameCallback;
         private static IntPtr _advanceFrameCallback;
@@ -143,6 +144,8 @@ namespace Nair.Classes.Managers
                 port
             );
 
+            this.port = port;
+
             // automatically disconnect clients after 3000 ms and start our count-down timer
             // for disconnects after 1000 ms.   To completely disable disconnects, simply use
             // a value of 0 for ggpo_set_disconnect_timeout.
@@ -152,8 +155,10 @@ namespace Nair.Classes.Managers
             errorCode = GGPO.AddPlayer(ggpo, (int)ggpoP1.type, ggpoP1.player_num, ggpoP1.ip_address, ggpoP1.port, out handleP1);
             errorCode = GGPO.AddPlayer(ggpo, (int)ggpoP2.type, ggpoP2.player_num, ggpoP2.ip_address, ggpoP2.port, out handleP2);
 
-            GGPO.SetFrameDelay(ggpo, handleP1, 2);
-            GGPO.SetFrameDelay(ggpo, handleP2, 2);
+            if(ggpoP1.type == GGPOPlayerType.GGPO_PLAYERTYPE_LOCAL)
+                GGPO.SetFrameDelay(ggpo, handleP1, 2);
+            if(ggpoP2.type == GGPOPlayerType.GGPO_PLAYERTYPE_LOCAL)
+                GGPO.SetFrameDelay(ggpo, handleP2, 2);
 
         }
 
@@ -175,7 +180,7 @@ namespace Nair.Classes.Managers
 
             if (ggpoP1.type == GGPOPlayerType.GGPO_PLAYERTYPE_LOCAL)
                 errorCode = GGPO.AddLocalInput(ggpo, handleP1, ControllerManager.RequestGGPOLocalInput(false));
-            else if(ggpoP2.type == GGPOPlayerType.GGPO_PLAYERTYPE_LOCAL)
+            if(ggpoP2.type == GGPOPlayerType.GGPO_PLAYERTYPE_LOCAL)
                 errorCode = GGPO.AddLocalInput(ggpo, handleP2, ControllerManager.RequestGGPOLocalInput(false));
 
             //Synchronize inputs with GGPO
@@ -192,16 +197,6 @@ namespace Nair.Classes.Managers
                     GGPO.AdvanceFrame(ggpo);
                 }
             }
-            else
-            {
-                int queuelen;
-                int recqueue;
-                int ping;
-                int kbpssent;
-                int localbehind;
-                int remotebehind;
-                GGPO.GetNetworkStats(ggpo, 2, out queuelen, out recqueue, out ping, out kbpssent, out localbehind, out remotebehind);
-            }
 
             AnimationManager.Update();
         }
@@ -209,6 +204,15 @@ namespace Nair.Classes.Managers
         public void Draw(SpriteBatch spriteBatch)
         {
             PlayerManagerRollback.Instance.Draw(spriteBatch);
+
+            string disp = "";
+            if (ggpoP1.type == GGPOPlayerType.GGPO_PLAYERTYPE_REMOTE)
+                disp = ggpoP1.player_num + " " + ggpoP1.ip_address + " " + ggpoP1.port;
+            if (ggpoP2.type == GGPOPlayerType.GGPO_PLAYERTYPE_REMOTE)
+                disp = ggpoP2.player_num + " " + ggpoP2.ip_address + " " + ggpoP2.port;
+
+            spriteBatch.DrawString(Game1.CourierNew, disp, new Vector2(0, (int)Math.Ceiling(Game1.ScaleY * 960)), Color.Black, 0f, new Vector2(), new Vector2((float)Game1.windowWidth / 1920, (float)Game1.windowHeight / 1080), SpriteEffects.None, 0f);
+
         }
 
         
