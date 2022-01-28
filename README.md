@@ -8,3 +8,8 @@ Without Config.cfg, the game will make a new one. Without any of the ControlProf
 
 This is NOT the Steam version of the game. (https://store.steampowered.com/app/1715850/NAIR)
 This is release 1.2.0.
+
+
+
+
+This branch includes some attempt at implementing rollback. It's unfinished, as I eventually switched to a different game engine. This implementation doesn't really reflect the final one, which both works and is formatted significantly better.
